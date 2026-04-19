@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Smartphone Stand Logs</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { padding: 6px 10px; margin-bottom: 12px; }
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+    th { background: #f0f0f0; }
+    #error { color: red; }
+  </style>
+</head>
+<body>
+  <h2>Smartphone Stand Logs</h2>
+  <button onclick="fetchData()">データ取得</button>
+  <div id="error"></div>
+  <div id="output"></div>
+ 
+  <script>
+    const EDGE_FUNCTION_URL = "https://<your-project-ref>.supabase.co/functions/v1/get-table-data";
+ 
+    async function fetchData() {
+      const error = document.getElementById("error");
+      const output = document.getElementById("output");
+      error.textContent = "";
+      output.innerHTML = "";
+ 
+      try {
+        const res = await fetch(EDGE_FUNCTION_URL, { method: "POST" });
+        const data = await res.json();
+ 
+        if (!res.ok) {
+          error.textContent = `エラー: ${data.error}`;
+          return;
+        }
+ 
+        if (!data.length) {
+          output.textContent = "データが0件です。";
+          return;
+        }
+ 
+        const keys = Object.keys(data[0]);
+        const table_el = document.createElement("table");
+        table_el.innerHTML =
+          `<tr>${keys.map(k => `<th>${k}</th>`).join("")}</tr>` +
+          data.map(row =>
+            `<tr>${keys.map(k => `<td>${row[k] ?? ""}</td>`).join("")}</tr>`
+          ).join("");
+        output.appendChild(table_el);
+ 
+      } catch (e) {
+        error.textContent = `通信エラー: ${e.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
